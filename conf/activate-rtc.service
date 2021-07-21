@@ -1,0 +1,10 @@
+[Unit]
+Description=Add RTC as new I2C device
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/local/bin/activate_rtc
+
+[Install]
+WantedBy=multi-user.target

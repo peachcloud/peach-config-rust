@@ -1,0 +1,3 @@
+# Backup
+
+This directory contains all the legacy configuration files for PeachCloud networking. These files have been deprecated by the transition to using systemd-networkd for networking. They are being kept here as a backup but will eventually be removed entirely.

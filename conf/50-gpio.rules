@@ -1,0 +1,1 @@
+SUBSYSTEM=="gpio", KERNEL=="gpiochip*", ACTION=="add", PROGRAM="/bin/sh -c 'chown -R root:gpio-user /dev/gpiochip* ; chmod -R 770 /dev/gpiochip*'"

@@ -1,0 +1,9 @@
+[Unit]
+Description=Determine when and how often the ap_auto_deploy script is run
+
+[Timer]
+OnBootSec=60s
+OnUnitActiveSec=180s
+
+[Install]
+WantedBy=timers.target

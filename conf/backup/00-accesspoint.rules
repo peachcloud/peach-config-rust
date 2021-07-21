@@ -1,0 +1,2 @@
+SUBSYSTEM=="net", ACTION=="add", RUN+="/usr/sbin/iw dev wlan0 interface add ap0 type __ap"
+SUBSYSTEM=="net", ACTION=="add", RUN+="/usr/bin/ip address add 11.11.11.10/24 brd + dev ap0"

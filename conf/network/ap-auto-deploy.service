@@ -1,0 +1,10 @@
+[Unit]
+Description=Start the ap0 service (access point) if the wlan0 service is active but not connected to any access point
+
+[Service]
+Type=oneshot
+RemainAfterExit=no
+ExecStart=/usr/local/bin/ap_auto_deploy
+
+[Install]
+WantedBy=multi-user.target

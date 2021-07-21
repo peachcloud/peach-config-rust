@@ -1,0 +1,13 @@
+#
+# Allow peach microservices to initiate reboot / shutdown
+# without needing to enter a password for sudo'd command.
+#
+
+# User alias for PeachCloud microservices which initiate shutdown
+User_Alias  PEACH_CTRL = peach-menu, peach-web
+
+# Command alias for reboot and shutdown
+Cmnd_Alias  SHUTDOWN = /sbin/reboot, /sbin/shutdown
+
+# Allow PEACH_CTRL users to execute SHUTDOWN commands without password
+PEACH_CTRL  ALL=(ALL) NOPASSWD: SHUTDOWN

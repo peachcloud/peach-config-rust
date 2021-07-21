@@ -1,0 +1,11 @@
+[Match]
+Name=ap0
+[Network]
+Address=11.11.11.1/24
+# IPMasquerade is doing NAT
+# Uncomment the two lines below to share internet over ap0
+#IPMasquerade=yes
+#IPForward=yes
+DHCPServer=yes
+[DHCPServer]
+DNS=84.200.69.80 1.1.1.1

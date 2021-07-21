@@ -1,0 +1,22 @@
+[Match]
+Name=e*
+
+[Network]
+## Uncomment only one option block
+# Option: using a DHCP server and multicast DNS
+LLMNR=no
+LinkLocalAddressing=no
+MulticastDNS=yes
+DHCP=ipv4
+
+# Option: using link-local ip addresses and multicast DNS
+#LLMNR=no
+#LinkLocalAddressing=yes
+#MulticastDNS=yes
+
+# Option: using static ip address and multicast DNS
+# (example, use your settings)
+#Address=192.168.50.60/24
+#Gateway=192.168.50.1
+#DNS=84.200.69.80 1.1.1.1
+#MulticastDNS=yes

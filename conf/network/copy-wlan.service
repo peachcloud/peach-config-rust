@@ -1,0 +1,8 @@
+[Unit]
+Before=network.target
+
+[Service]
+ExecStart=/usr/local/bin/copy-wlan.sh
+
+[Install]
+WantedBy=default.target

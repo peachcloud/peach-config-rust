@@ -1,0 +1,17 @@
+#
+# Allow peach-network user to execute activate_ap and
+# activate_client scripts without needing to enter
+# a password for sudo'd command.
+#
+
+# User alias for PeachCloud microservices which control networking
+User_Alias  PEACH_NTWK = peach-network
+
+# Command alias for activate_ap and activate_client scripts
+Cmnd_Alias  SCRIPTS = /usr/local/bin/activate_ap, /usr/local/bin/activate_client
+
+# Command alias for network-related actions
+Cmnd_Alias  SERVICE = /usr/bin/systemctl unmask hostapd, /usr/bin/systemctl start hostapd, /usr/bin/systemctl stop hostapd, /usr/bin/systemctl stop dnsmasq, /usr/bin/systemctl start dnsmasq, /usr/bin/systemctl start wpa_supplicant, /usr/bin/systemctl stop wpa_supplicant, /usr/sbin/ifup wlan0, /usr/sbin/ifdown wlan0, /bin/ip link set wlan0 mode default
+
+# Allow PEACH_NTWK users to execute SCRIPTS & SERVICE commands without password
+PEACH_NTWK  ALL=(ALL) NOPASSWD: SCRIPTS, SERVICE
