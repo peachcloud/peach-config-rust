@@ -1,12 +1,16 @@
+mod constants;
 mod error;
 mod setup_peach;
+mod setup_networking;
+mod setup_peach_deb;
+mod update;
 mod utils;
-mod constants;
 
-use log::{info, error};
+use log::{error, info};
 use structopt::StructOpt;
 
 use crate::setup_peach::setup_peach;
+use crate::update::update_microservices;
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -18,13 +22,12 @@ struct Opt {
     verbose: bool,
 }
 
-
 // enum options for real-time clock choices
 #[derive(PartialEq)]
 pub enum RtcOption {
-   DS1307,
-   DS3231,
-   None,
+    DS1307,
+    DS3231,
+    None,
 }
 
 fn main() {
@@ -43,7 +46,7 @@ fn main() {
     match setup_peach(true, true, true, RtcOption::None) {
         Ok(_) => {
             info!("++ succesfully configured peach")
-        },
+        }
         Err(err) => {
             error!("peach-config encounter an error: {}", err)
         }
