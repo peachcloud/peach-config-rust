@@ -205,13 +205,13 @@ pub fn setup_peach(
     cmd(&["cp", &conf("shutdown"), "/etc/sudoers.d/shutdown"])?;
 
     info!("[ CONFIGURING PEACH APT REPO ]");
-    setup_peach_deb();
+    setup_peach_deb()?;
 
     info!("[ INSTALLING PEACH MICROSERVICES ]");
-    update_microservices();
+    update_microservices()?;
 
     info!("[ CONFIGURING NETWORKING ]");
-    configure_networking();
+    configure_networking()?;
 
     //  TODO: save hardware configuration as a yaml
 
