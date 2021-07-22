@@ -19,7 +19,10 @@ pub enum PeachConfigError {
         command: String,
     },
     #[snafu(display("Failed to write file: {}", file))]
-    FileWriteError { file: String, source: std::io::Error },
+    FileWriteError {
+        file: String,
+        source: std::io::Error,
+    },
 }
 
 impl From<std::io::Error> for PeachConfigError {

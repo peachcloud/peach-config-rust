@@ -1,18 +1,18 @@
-use crate::error::{PeachConfigError, FileWriteError};
-use crate::utils::{cmd, conf, create_group_if_doesnt_exist, does_user_exist, get_output};
-use crate::setup_peach_deb::setup_peach_deb;
+use crate::error::{FileWriteError, PeachConfigError};
 use crate::setup_networking::configure_networking;
+use crate::setup_peach_deb::setup_peach_deb;
 use crate::update::update_microservices;
+use crate::utils::{cmd, conf, create_group_if_doesnt_exist, does_user_exist, get_output};
 use crate::RtcOption;
-use snafu::ResultExt;
 use log::info;
+use snafu::ResultExt;
 use std::fs;
 
 pub fn setup_peach(
     no_input: bool,
     default_locale: bool,
     i2c: bool,
-    rtc: RtcOption,
+    rtc: Option<RtcOption>,
 ) -> Result<(), PeachConfigError> {
     info!("[ RUNNING SETUP PEACH ]");
 
@@ -132,35 +132,40 @@ pub fn setup_peach(
         cmd(&["cp", &conf("modules"), "/etc/modules"])?;
     }
 
-    if i2c && rtc != RtcOption::None {
-        if rtc == RtcOption::DS1307 {
-            info!("[ CONFIGURING DS1307 RTC MODULE ]");
+    if let Some(rtc_model) = rtc {
+        if i2c {
+            match rtc_model {
+                RtcOption::DS1307 => {
+                    info!("[ CONFIGURING DS1307 RTC MODULE ]");
+                    cmd(&[
+                        "cp",
+                        &conf("config.txt_ds1307"),
+                        "/boot/firmware/config.txt",
+                    ])?;
+                }
+                RtcOption::DS3231 => {
+                    info!("[ CONFIGURING DS3231 RTC MODULE ]");
+                    cmd(&[
+                        "cp",
+                        &conf("config.txt_ds3231"),
+                        "/boot/firmware/config.txt",
+                    ])?;
+                }
+            }
+            cmd(&["cp", &conf("modules_rtc"), "/etc/modules"])?;
             cmd(&[
                 "cp",
-                &conf("config.txt_ds1307"),
-                "/boot/firmware/config.txt",
+                &conf("activate_rtc.sh"),
+                "/usr/local/bin/activate_rtc",
             ])?;
-        } else if rtc == RtcOption::DS3231 {
-            info!("[ CONFIGURING DS3231 RTC MODULE ]");
             cmd(&[
                 "cp",
-                &conf("config.txt_ds3231"),
-                "/boot/firmware/config.txt",
+                &conf("activate-rtc.service"),
+                "/etc/systemd/system/activate-rtc.service",
             ])?;
+            cmd(&["systemctl", "daemon-reload"])?;
+            cmd(&["systemctl", "enable", "activate-rtc"])?;
         }
-        cmd(&["cp", &conf("modules_rtc"), "/etc/modules"])?;
-        cmd(&[
-            "cp",
-            &conf("activate_rtc.sh"),
-            "/usr/local/bin/activate_rtc",
-        ])?;
-        cmd(&[
-            "cp",
-            &conf("activate-rtc.service"),
-            "/etc/systemd/system/activate-rtc.service",
-        ])?;
-        cmd(&["systemctl", "daemon-reload"])?;
-        cmd(&["systemctl", "enable", "activate-rtc"])?;
     }
 
     info!("[ CONFIGURING NGINX ]");
@@ -191,7 +196,7 @@ pub fn setup_peach(
                 "/etc/locale.gen",
             ])?;
             fs::write("/etc/default/locale", "LANG=\"en_US.UTF-8\"").context(FileWriteError {
-                file: "/etc/default/locale".to_string()
+                file: "/etc/default/locale".to_string(),
             })?;
             cmd(&["dpkg-reconfigure", "--frontend=noninteractive", "locales"])?;
         }

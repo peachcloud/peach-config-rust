@@ -1,10 +1,9 @@
+use crate::constants::SERVICES;
 use crate::error::PeachConfigError;
-use crate::constants::{SERVICES};
 use crate::utils::{cmd, conf, get_output};
 use crate::RtcOption;
 use log::info;
 use std::fs;
-
 
 /// updates peach-config using apt-get
 pub fn run_update_self() -> Result<(), PeachConfigError> {
@@ -13,7 +12,6 @@ pub fn run_update_self() -> Result<(), PeachConfigError> {
     Ok(())
 }
 
-
 /// installs all peach microservices or updates them to the latest version
 /// except for peach-config
 /// :return: None
@@ -21,8 +19,11 @@ pub fn update_microservices() -> Result<(), PeachConfigError> {
     // update apt
     cmd(&["apt-get", "update"])?;
     // filter out peach-config from list of services
-    let services_to_update: Vec<&str> = SERVICES.to_vec().into_iter()
-        .filter(|&x| x != "peach-config").collect();
+    let services_to_update: Vec<&str> = SERVICES
+        .to_vec()
+        .into_iter()
+        .filter(|&x| x != "peach-config")
+        .collect();
 
     // apt-get install all services
     let mut update_cmd = ["apt-get", "install"].to_vec();
@@ -57,7 +58,9 @@ pub fn list_available_updates() -> Result<(), PeachConfigError> {
     let output = get_output(&["apt", "list", "--upgradable"])?;
     let lines = output.split("\n");
     // filter down to just lines which are one of the services
-    let upgradeable = lines.into_iter().filter(|x| SERVICES.iter().any(|s| x == s));
+    let upgradeable = lines
+        .into_iter()
+        .filter(|x| SERVICES.iter().any(|s| x == s));
     info!("upgradeable: {:?}", upgradeable);
     // TODO: format as json
     Ok(())
