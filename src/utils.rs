@@ -45,12 +45,18 @@ pub fn conf(path: &str) -> String {
 }
 
 pub fn create_group_if_doesnt_exist(group: &str) -> Result<(), PeachConfigError> {
-    let output = get_output(&["getent", "group", group])?.to_string();
-    if output.contains(group) {
-        // then group already exists, just return Ok
+    let output = Command::new("getent")
+        .arg("group")
+        .arg(group)
+        .output()
+        .context(CmdIoError {
+            command: format!("getent group {}", group)
+        })?;
+    if output.status.success() {
+        // then group already exists
         Ok(())
     } else {
-        // otherwise create the group
+        // otherwise create group
         cmd(&["/usr/sbin/groupadd", group])?;
         Ok(())
     }
