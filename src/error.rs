@@ -23,6 +23,15 @@ pub enum PeachConfigError {
         file: String,
         source: std::io::Error,
     },
+    #[snafu(display("Failed to read file: {}", file))]
+    FileReadError {
+        file: String,
+        source: std::io::Error,
+    },
+    #[snafu(display("Error serializing json: {}", source))]
+    SerdeError {
+        source: serde_json::Error,
+    }
 }
 
 impl From<std::io::Error> for PeachConfigError {
@@ -30,6 +39,15 @@ impl From<std::io::Error> for PeachConfigError {
         PeachConfigError::CmdIoError {
             source: err,
             command: "unknown".to_string(),
+        }
+    }
+}
+
+
+impl From<serde_json::Error> for PeachConfigError {
+    fn from(err: serde_json::Error) -> PeachConfigError {
+        PeachConfigError::SerdeError {
+            source: err,
         }
     }
 }

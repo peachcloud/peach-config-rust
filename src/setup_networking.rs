@@ -1,13 +1,14 @@
-// script to configure a Debian installation to use
-// systemd-networkd for general networking. The script configures the eth0,
-// wlan0 and ap0 interfaces. This configuration allows switching between
-// wireless client mode (wlan0) and wireless access point mode (ap0)
-
-use crate::error::PeachConfigError;
-use crate::utils::{cmd, conf};
 use log::info;
 use std::path::Path;
 
+use crate::error::PeachConfigError;
+use crate::utils::{cmd, conf};
+
+
+/// Idempotent script to configure a Debian installation to use
+/// systemd-networkd for general networking. The script configures the eth0,
+/// wlan0 and ap0 interfaces. This configuration allows switching between
+/// wireless client mode (wlan0) and wireless access point mode (ap0)
 pub fn configure_networking() -> Result<(), PeachConfigError> {
     info!("[ INSTALLING SYSTEM REQUIREMENTS ]");
     cmd(&["apt", "install", "-y", "libnss-resolve"])?;

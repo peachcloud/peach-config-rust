@@ -1,13 +1,30 @@
-use crate::error::{FileWriteError, PeachConfigError};
-use crate::setup_networking::configure_networking;
-use crate::setup_peach_deb::setup_peach_deb;
-use crate::update::update_microservices;
-use crate::utils::{cmd, conf, create_group_if_doesnt_exist, does_user_exist, get_output};
-use crate::RtcOption;
 use log::info;
 use snafu::ResultExt;
 use std::fs;
 
+use crate::error::{FileWriteError, PeachConfigError};
+use crate::setup_networking::configure_networking;
+use crate::setup_peach_deb::setup_peach_deb;
+use crate::generate_manifest::save_hardware_config;
+use crate::update::update_microservices;
+use crate::utils::{cmd, conf, create_group_if_doesnt_exist, does_user_exist, get_output};
+use crate::RtcOption;
+
+
+/// Idempotent setup of PeachCloud device which sets up networking configuration,
+/// configures the peachcloud apt repository, installs system dependencies,
+/// installs microservices, and creates necessary system groups and users.
+///
+/// # Arguments
+///
+/// * `no_input` - a bool, if true, runs the script without requiring user interaction
+/// * `default_locale` - a bool, if true, sets the default locale of the device to en_US.UTF-8
+/// * `i2c` - a bool, if true, setup i2c configurations for peach-menu
+/// * `rtc` - an optional enum, which if provided indicates the model number of the real-time
+///           clock being used
+///
+/// If any command in the script returns an error (non-zero exit status) a PeachConfigError
+/// is returned, otherwise an Ok is returned.
 pub fn setup_peach(
     no_input: bool,
     default_locale: bool,
@@ -132,7 +149,7 @@ pub fn setup_peach(
         cmd(&["cp", &conf("modules"), "/etc/modules"])?;
     }
 
-    if let Some(rtc_model) = rtc {
+    if let Some(rtc_model) = &rtc {
         if i2c {
             match rtc_model {
                 RtcOption::DS1307 => {
@@ -218,7 +235,8 @@ pub fn setup_peach(
     info!("[ CONFIGURING NETWORKING ]");
     configure_networking()?;
 
-    //  TODO: save hardware configuration as a yaml
+    info!("[ SAVING LOG OF HARDWARE CONFIGURATIONS ]");
+    save_hardware_config(i2c, rtc);
 
     info!("[ PEACHCLOUD SETUP COMPLETE ]");
     info!("[ ------------------------- ]");

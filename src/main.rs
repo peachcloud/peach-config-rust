@@ -5,13 +5,17 @@ mod setup_peach;
 mod setup_peach_deb;
 mod update;
 mod utils;
+mod generate_manifest;
 
+use serde::{Deserialize, Serialize};
 use clap::arg_enum;
 use log::{error, info};
 use structopt::StructOpt;
 
 use crate::setup_peach::setup_peach;
 use crate::update::update_microservices;
+use crate::generate_manifest::generate_manifest;
+
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -35,6 +39,9 @@ enum PeachConfig {
 
     #[structopt(name = "setup")]
     Setup(SetupOpts),
+
+    #[structopt(name = "update")]
+    Update,
 }
 
 #[derive(StructOpt, Debug)]
@@ -50,21 +57,16 @@ struct SetupOpts {
 }
 
 arg_enum! {
+    /// enum options for real-time clock choices
     #[derive(Debug)]
     #[allow(non_camel_case_types)]
     #[allow(clippy::enum_variant_names)]
+    #[derive(Serialize, Deserialize)]
     pub enum RtcOption {
         DS1307,
         DS3231
     }
 }
-
-//// enum options for real-time clock choices
-//#[derive(PartialEq, Debug)]
-//pub enum RtcOption {
-//    DS1307,
-//    DS3231
-//}
 
 fn main() {
     // initialize the logger
@@ -73,26 +75,32 @@ fn main() {
     // parse cli arguments
     let opt = Opt::from_args();
 
-    // debugging what was parsed
-    if opt.verbose {
-        info!("using verbose mode")
-    }
-
     info!("++ running peach-config");
     if let Some(subcommand) = opt.commands {
         match subcommand {
             PeachConfig::Setup(cfg) => {
                 match setup_peach(cfg.no_input, cfg.default_locale, cfg.i2c, cfg.rtc) {
-                    Ok(_) => {
-                        info!("++ succesfully configured peach")
-                    }
+                    Ok(_) => {},
                     Err(err) => {
                         error!("peach-config encounter an error: {}", err)
                     }
                 }
             }
             PeachConfig::Manifest => {
-                println!("++ generating manifest");
+                match generate_manifest() {
+                    Ok(_) => {},
+                    Err(err) => {
+                        error!("encounter an error generating manifest: {}", err)
+                    }
+                }
+            },
+            PeachConfig::Update => {
+                match update_microservices() {
+                    Ok(_) => {},
+                    Err(err) => {
+                        error!("encounter an error during update: {}", err)
+                    }
+                }
             }
         }
     }

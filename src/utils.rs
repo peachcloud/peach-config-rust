@@ -1,4 +1,4 @@
-use log::info;
+use log::{info, debug};
 use snafu::ResultExt;
 use std::process::{Command, Output};
 
@@ -14,11 +14,11 @@ pub fn cmd(args: &[&str]) -> Result<Output, PeachConfigError> {
         .context(CmdIoError {
             command: format!("{:?}", args),
         })?;
-    info!("output: {:?}", output);
+    debug!("output: {:?}", output);
     if output.status.success() {
         Ok(output)
     } else {
-        let err_msg = String::from_utf8(output.stderr).expect("failed to read sterr");
+        let err_msg = String::from_utf8(output.stderr).expect("failed to read stderr");
         Err(PeachConfigError::CmdError {
             msg: err_msg,
             command: format!("{:?}", args),
@@ -38,7 +38,7 @@ pub fn get_output(args: &[&str]) -> Result<String, PeachConfigError> {
     Ok(std_out)
 }
 
-/// takes in a relative path from the conf dir and returns the full path
+/// takes in a relative path from the conf dir and returns the absolute path to the file
 pub fn conf(path: &str) -> String {
     let full_path = format!("{}/{}", CONF, path);
     full_path

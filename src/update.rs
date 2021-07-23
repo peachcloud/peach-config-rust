@@ -1,9 +1,7 @@
 use crate::constants::SERVICES;
 use crate::error::PeachConfigError;
-use crate::utils::{cmd, conf, get_output};
-use crate::RtcOption;
+use crate::utils::{cmd, get_output};
 use log::info;
-use std::fs;
 
 /// updates peach-config using apt-get
 pub fn run_update_self() -> Result<(), PeachConfigError> {
