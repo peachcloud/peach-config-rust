@@ -63,11 +63,18 @@ pub fn create_group_if_doesnt_exist(group: &str) -> Result<(), PeachConfigError>
 }
 
 pub fn does_user_exist(user: &str) -> Result<bool, PeachConfigError> {
-    let output = get_output(&["getent", "passwd", user])?.to_string();
-    if output.contains(user) {
-        // then group already exists, just return Ok
+    let output = Command::new("getent")
+        .arg("passwd")
+        .arg(user)
+        .output()
+        .context(CmdIoError {
+            command: format!("getent passwd {}", user)
+        })?;
+    if output.status.success() {
+        // then user already exists
         Ok(true)
     } else {
+        // otherwise user does not exist
         Ok(false)
     }
 }

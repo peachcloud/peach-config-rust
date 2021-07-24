@@ -8,7 +8,7 @@ dtparam=i2c_arm=on
 # Apply device tree overlay to enable pull-up resistors for buttons
 device_tree_overlay=overlays/mygpio.dtbo
 
-kernel=vmlinuz-4.19.0-14-arm64
+kernel=vmlinuz-4.19.0-17-arm64
 # For details on the initramfs directive, see
 # https://www.raspberrypi.org/forums/viewtopic.php?f=63&t=10532
-initramfs initrd.img-4.19.0-14-arm64
+initramfs initrd.img-4.19.0-17-arm64

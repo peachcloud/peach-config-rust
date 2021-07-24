@@ -6,7 +6,7 @@ use log::info;
 /// updates peach-config using apt-get
 pub fn run_update_self() -> Result<(), PeachConfigError> {
     cmd(&["apt-get", "update"])?;
-    cmd(&["apt-get", "install", "python3-peach-config"])?;
+    cmd(&["apt-get", "install", "-y", "peach-config"])?;
     Ok(())
 }
 
@@ -24,7 +24,7 @@ pub fn update_microservices() -> Result<(), PeachConfigError> {
         .collect();
 
     // apt-get install all services
-    let mut update_cmd = ["apt-get", "install"].to_vec();
+    let mut update_cmd = ["apt-get", "install", "-y"].to_vec();
     update_cmd.extend(services_to_update);
     cmd(&update_cmd)?;
     Ok(())
