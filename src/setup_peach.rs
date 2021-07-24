@@ -220,7 +220,8 @@ pub fn setup_peach(
     }
 
     info!("[ CONFIGURING CONSOLE LOG-LEVEL PRINTING ]");
-    cmd(&["sysctl", "-w", "kernel.printk=4 4 1 7"])?;
+    // TODO: for now commenting this out, because its throwing an error
+//    cmd(&["sysctl", "-w", "kernel.printk=4 4 1 7"])?;
 
     info!("[ CONFIGURING SUDOERS ]");
     cmd(&["mkdir", "-p", "/etc/sudoers.d"])?;
