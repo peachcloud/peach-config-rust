@@ -3,4 +3,4 @@ echo "deb http://apt.peachcloud.org/ buster main" > /etc/apt/sources.list.d/peac
 wget -O - http://apt.peachcloud.org/pubkey.gpg | sudo apt-key add -
 apt-get update
 apt-get install -y peach-config
-peach-config -i -n -d
+peach-config setup -i -n -d
