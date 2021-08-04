@@ -1,18 +1,53 @@
 use crate::constants::SERVICES;
 use crate::error::PeachConfigError;
 use crate::utils::{cmd, get_output};
+use crate::UpdateOpts;
+use serde::{Deserialize, Serialize};
 use log::info;
 
-/// updates peach-config using apt-get
+
+/// Parses update subcommand CLI arguments and calls correct methods.
+///
+/// If no options are passed, it runs a full update
+/// - first updating peach-config
+/// - and then re-running peach-config to update all the other microservices
+///
+/// # Arguments
+///
+/// * `opts` - an UpdateOpts object containing parsed CLI args
+///
+/// Any error results in a PeachConfigError, otherwise an Ok is returned.
+pub fn update(opts: UpdateOpts) -> Result<(), PeachConfigError> {
+    if opts.self_only {
+        run_update_self()
+    }
+    else if opts.microservices {
+        update_microservices()
+    }
+    else if opts.list {
+        list_available_updates()
+    }
+    // otherwise no options were passed, and we do a full update:
+    // - first updating peach-config
+    // - and then re-running peach-config to update all the other microservices
+    else {
+        run_update_self()?;
+        cmd(&["/usr/bin/peach-config", "update", "--microservices"])?;
+        Ok(())
+    }
+}
+
+
+/// Updates peach-config using apt-get
 pub fn run_update_self() -> Result<(), PeachConfigError> {
     cmd(&["apt-get", "update"])?;
     cmd(&["apt-get", "install", "-y", "peach-config"])?;
     Ok(())
 }
 
-/// installs all peach microservices or updates them to the latest version
+
+/// Installs all peach microservices or updates them to the latest version
 /// except for peach-config
-/// :return: None
 pub fn update_microservices() -> Result<(), PeachConfigError> {
     // update apt
     cmd(&["apt-get", "update"])?;
@@ -30,46 +65,29 @@ pub fn update_microservices() -> Result<(), PeachConfigError> {
     Ok(())
 }
 
-//
-//pub fn update() -> Result<(), PeachConfigError> {
-//    // update peach-config (update itself) then run update on all other microservices
-//    args = parser.parse_args()
-//
-//    // if -list then just show updates available without running them
-//    if args.list:
-//        list_available_updates()
-//    // just update self
-//    elif args.self:
-//        run_update_self()
-//    // just update other microservices
-//    elif args.microservices:
-//        update_microservices(purge=args.purge)
-//    // update self and then update other microservices
-//    else:
-//        run_update_self()
-//        subprocess.check_call(['/usr/bin/peach-config', 'update', '--microservices'])
-//}
+/// Output form of list_available_updates
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ListAvailableUpdatesOutput {
+    // packages is a list of package names
+    upgradeable: Vec<String>
+}
 
-/// checks if there are any PeachCloud updates available and displays them
+/// Checks if there are any PeachCloud updates available and displays them
 pub fn list_available_updates() -> Result<(), PeachConfigError> {
     cmd(&["apt-get", "update"])?;
     let output = get_output(&["apt", "list", "--upgradable"])?;
     let lines = output.split("\n");
     // filter down to just lines which are one of the services
-    let upgradeable = lines
+    let upgradeable: Vec<String> = lines
         .into_iter()
-        .filter(|x| SERVICES.iter().any(|s| x == s));
-    info!("upgradeable: {:?}", upgradeable);
-    // TODO: format as json
+        .filter(|x| SERVICES.iter().any(|s| x.contains(s)))
+        .map(|x| x.to_string())
+        .collect();
+    let list_available_updates_output = ListAvailableUpdatesOutput {
+        upgradeable,
+    };
+    let output = serde_json::to_string(&list_available_updates_output)?;
+    println!("{}", output);
     Ok(())
 }
 
-//
-//def init_update_parser(parser):
-//    // update argument parser
-//    parser.add_argument("-m", "--microservices", help="update all other peach microservices", action="store_true")
-//    parser.add_argument("-l", "--list", help="list if there are any updates available without running them", action="store_true")
-//    parser.add_argument("-s", "--self", help="update peach-config", action="store_true")
-//    parser.add_argument("-p", "--purge", help="purge old installations when updating", action="store_true")
-//    return parser
-//

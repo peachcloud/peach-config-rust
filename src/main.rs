@@ -13,7 +13,7 @@ use log::{error, info};
 use structopt::StructOpt;
 
 use crate::setup_peach::setup_peach;
-use crate::update::update_microservices;
+use crate::update::update;
 use crate::generate_manifest::generate_manifest;
 
 
@@ -34,27 +34,51 @@ struct Opt {
 #[derive(StructOpt, Debug)]
 #[structopt(name = "peach-config", about = "about")]
 enum PeachConfig {
+
+    /// Prints json manifest of peach configurations
     #[structopt(name = "manifest")]
     Manifest,
 
+    /// Idempotent setup of PeachCloud
     #[structopt(name = "setup")]
     Setup(SetupOpts),
 
+    /// Updates all PeachCloud microservices
     #[structopt(name = "update")]
-    Update,
+    Update(UpdateOpts),
 }
 
 #[derive(StructOpt, Debug)]
 struct SetupOpts {
+    /// Setup i2c configurations
     #[structopt(short, long)]
     i2c: bool,
+    /// Optionally select which model of real-time-clock is being used,
+    /// {ds1307, ds3231}
     #[structopt(short, long)]
     rtc: Option<RtcOption>,
+    /// Run peach-config in non-interactive mode
     #[structopt(short, long)]
     no_input: bool,
+    /// Use the default en_US.UTF-8 locale for compatability
     #[structopt(short, long)]
     default_locale: bool,
 }
+
+
+#[derive(StructOpt, Debug)]
+pub struct UpdateOpts {
+    /// Only update other microservices and not peach-config
+    #[structopt(short, long)]
+    microservices: bool,
+    /// Only update peach-config and not other microservices
+    #[structopt(short, long = "--self")]
+    self_only: bool,
+    /// List microservices which are available for updating
+    #[structopt(short, long)]
+    list: bool,
+}
+
 
 arg_enum! {
     /// enum options for real-time clock choices
@@ -75,14 +99,14 @@ fn main() {
     // parse cli arguments
     let opt = Opt::from_args();
 
-    info!("++ running peach-config");
+    // switch based on subcommand
     if let Some(subcommand) = opt.commands {
         match subcommand {
             PeachConfig::Setup(cfg) => {
                 match setup_peach(cfg.no_input, cfg.default_locale, cfg.i2c, cfg.rtc) {
                     Ok(_) => {},
                     Err(err) => {
-                        error!("peach-config encounter an error: {}", err)
+                        error!("peach-config encountered an error: {}", err)
                     }
                 }
             }
@@ -90,15 +114,15 @@ fn main() {
                 match generate_manifest() {
                     Ok(_) => {},
                     Err(err) => {
-                        error!("encounter an error generating manifest: {}", err)
+                        error!("peach-config countered an error generating manifest: {}", err)
                     }
                 }
             },
-            PeachConfig::Update => {
-                match update_microservices() {
+            PeachConfig::Update(opts) => {
+                match update(opts) {
                     Ok(_) => {},
                     Err(err) => {
-                        error!("encounter an error during update: {}", err)
+                        error!("peach-config encountered an error during update: {}", err)
                     }
                 }
             }

@@ -1,6 +1,6 @@
 [package]
 name = "peach-config"
-version = "0.1.8"
+version = "0.1.9"
 authors = ["Andrew Reid <gnomad@cryptolab.net>", "Max Fowler <max@mfowler.info>"]
 edition = "2018"
 description = "Command line tool for installing, updating and configuring PeachCloud"

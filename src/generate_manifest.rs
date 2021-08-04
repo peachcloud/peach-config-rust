@@ -10,7 +10,7 @@ use crate::utils::{get_output};
 use crate::constants::HARDWARE_CONFIG_FILE;
 use crate::RtcOption;
 
-/// returns a HashMap<String, String> of all the peach-packages which are currently installed
+/// Returns a HashMap<String, String> of all the peach-packages which are currently installed
 /// mapped to their version number e.g. { "peach-probe": "1.2.0", "peach-network": "1.4.0" }
 pub fn get_currently_installed_microservices() -> Result<HashMap<String, String>, PeachConfigError> {
 
@@ -41,7 +41,7 @@ pub fn get_currently_installed_microservices() -> Result<HashMap<String, String>
     Ok(peach_packages)
 }
 
-/// output form of manifest
+/// Output form of manifest
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Manifest {
     // packages is a map of {package_name: version}
@@ -49,7 +49,7 @@ pub struct Manifest {
     hardware: Option<HardwareConfig>
 }
 
-/// the form that hardware configs are saved in when peach-config setup runs successfully
+/// The form that hardware configs are saved in when peach-config setup runs successfully
 #[derive(Debug, Serialize, Deserialize)]
 pub struct HardwareConfig {
     // packages is a map of {package_name: version}
@@ -57,7 +57,15 @@ pub struct HardwareConfig {
     rtc: Option<RtcOption>
 }
 
-/// log which hardware settings were configured to a .json file
+/// Log which hardware settings were configured to a .json file
+/// # Arguments
+///
+/// * `i2c` - a boolean flag, if true i2c will be configured
+/// * `rtc` - an optional enum, if supplied indicates which real-time-clock model
+/// is being used
+///
+/// Any error results in a PeachConfigError, otherwise the saved HardwareConfig object
+/// is returned.
 pub fn save_hardware_config(i2c: bool, rtc: Option<RtcOption>) -> Result<HardwareConfig, PeachConfigError> {
 
     let hardware_config = HardwareConfig { i2c, rtc };
@@ -71,7 +79,10 @@ pub fn save_hardware_config(i2c: bool, rtc: Option<RtcOption>) -> Result<Hardwar
     Ok(hardware_config)
 }
 
-/// load the hardware configs that were saved from the last successful run of peach-config setup
+/// Load the hardware configs that were saved from the last successful run of peach-config setup
+///
+/// Returns an Ok(Some<HardwareConfg>) containing the configuration if one is found,
+/// and returns Ok(None) if no hardware configuration was found.
 fn load_hardware_config() -> Result<Option<HardwareConfig>, PeachConfigError> {
     // if there is no hardware_config, return None
     let hardware_config_exists = std::path::Path::new(HARDWARE_CONFIG_FILE).exists();
@@ -88,9 +99,9 @@ fn load_hardware_config() -> Result<Option<HardwareConfig>, PeachConfigError> {
     }
 }
 
-/// outputs a Manifest in json form to stdout
+/// Outputs a Manifest in json form to stdout
 /// which contains the currently installed peach packages
-/// as well as the hardware configuration of the last run of peach-config setup
+/// as well as the hardware configuration of the last run of peach-config setup.
 pub fn generate_manifest() -> Result<(), PeachConfigError> {
     let packages = get_currently_installed_microservices()?;
     let hardware_config_option = load_hardware_config()?;
