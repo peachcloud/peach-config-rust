@@ -33,7 +33,7 @@ You can then install peach-config with apt:
 
 ``` bash
 sudo apt-get update
-sudo apt-get install python3-peach-config
+sudo apt-get install peach-config
 ```
 
 Alternatively you can run the following one-liner, which does all of the above:
