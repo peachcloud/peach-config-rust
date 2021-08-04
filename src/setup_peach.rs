@@ -3,13 +3,12 @@ use snafu::ResultExt;
 use std::fs;
 
 use crate::error::{FileWriteError, PeachConfigError};
+use crate::generate_manifest::save_hardware_config;
 use crate::setup_networking::configure_networking;
 use crate::setup_peach_deb::setup_peach_deb;
-use crate::generate_manifest::save_hardware_config;
 use crate::update::update_microservices;
 use crate::utils::{cmd, conf, create_group_if_doesnt_exist, does_user_exist, get_output};
 use crate::RtcOption;
-
 
 /// Idempotent setup of PeachCloud device which sets up networking configuration,
 /// configures the peachcloud apt repository, installs system dependencies,
@@ -221,7 +220,7 @@ pub fn setup_peach(
 
     info!("[ CONFIGURING CONSOLE LOG-LEVEL PRINTING ]");
     // TODO: for now commenting this out, because its throwing an error
-//    cmd(&["sysctl", "-w", "kernel.printk=4 4 1 7"])?;
+    //    cmd(&["sysctl", "-w", "kernel.printk=4 4 1 7"])?;
 
     info!("[ CONFIGURING SUDOERS ]");
     cmd(&["mkdir", "-p", "/etc/sudoers.d"])?;
@@ -237,7 +236,7 @@ pub fn setup_peach(
     configure_networking()?;
 
     info!("[ SAVING LOG OF HARDWARE CONFIGURATIONS ]");
-    save_hardware_config(i2c, rtc);
+    save_hardware_config(i2c, rtc)?;
 
     info!("[ PEACHCLOUD SETUP COMPLETE ]");
     info!("[ ------------------------- ]");

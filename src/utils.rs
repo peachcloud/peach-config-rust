@@ -1,4 +1,4 @@
-use log::{info, debug};
+use log::{debug, info};
 use snafu::ResultExt;
 use std::process::{Command, Output};
 
@@ -60,7 +60,7 @@ pub fn create_group_if_doesnt_exist(group: &str) -> Result<(), PeachConfigError>
         .arg(group)
         .output()
         .context(CmdIoError {
-            command: format!("getent group {}", group)
+            command: format!("getent group {}", group),
         })?;
     if output.status.success() {
         // then group already exists
@@ -79,7 +79,7 @@ pub fn does_user_exist(user: &str) -> Result<bool, PeachConfigError> {
         .arg(user)
         .output()
         .context(CmdIoError {
-            command: format!("getent passwd {}", user)
+            command: format!("getent passwd {}", user),
         })?;
     if output.status.success() {
         // then user already exists

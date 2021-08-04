@@ -1,19 +1,18 @@
-use std::fs;
-use snafu::ResultExt;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
-use serde_json;
+use snafu::ResultExt;
 use std::collections::HashMap;
-use regex::{Regex};
+use std::fs;
 
-use crate::error::{PeachConfigError, FileWriteError, FileReadError};
-use crate::utils::{get_output};
 use crate::constants::HARDWARE_CONFIG_FILE;
+use crate::error::{FileReadError, FileWriteError, PeachConfigError};
+use crate::utils::get_output;
 use crate::RtcOption;
 
 /// Returns a HashMap<String, String> of all the peach-packages which are currently installed
 /// mapped to their version number e.g. { "peach-probe": "1.2.0", "peach-network": "1.4.0" }
-pub fn get_currently_installed_microservices() -> Result<HashMap<String, String>, PeachConfigError> {
-
+pub fn get_currently_installed_microservices() -> Result<HashMap<String, String>, PeachConfigError>
+{
     // gets a list of all packages currently installed with dpkg
     let packages = get_output(&["dpkg", "-l"])?;
 
@@ -27,15 +26,18 @@ pub fn get_currently_installed_microservices() -> Result<HashMap<String, String>
     // and for each capture, creates a value in the hash map,
     //  which maps the name of the package, to its version number
     // e.g. { "peach-probe": "1.2.0", "peach-network": "1.4.0" }
-    let peach_packages: HashMap<String, String> = re.captures_iter(&packages).filter_map(|cap| {
-        let groups = (cap.get(1), cap.get(2));
-        match groups {
-            (Some(package), Some(version)) => {
-                Some((package.as_str().to_string(), version.as_str().to_string()))
-            },
-            _ => None,
-        }
-    }).collect();
+    let peach_packages: HashMap<String, String> = re
+        .captures_iter(&packages)
+        .filter_map(|cap| {
+            let groups = (cap.get(1), cap.get(2));
+            match groups {
+                (Some(package), Some(version)) => {
+                    Some((package.as_str().to_string(), version.as_str().to_string()))
+                }
+                _ => None,
+            }
+        })
+        .collect();
 
     // finally the hashmap of packages and version numbers is returned
     Ok(peach_packages)
@@ -46,7 +48,7 @@ pub fn get_currently_installed_microservices() -> Result<HashMap<String, String>
 pub struct Manifest {
     // packages is a map of {package_name: version}
     packages: HashMap<String, String>,
-    hardware: Option<HardwareConfig>
+    hardware: Option<HardwareConfig>,
 }
 
 /// The form that hardware configs are saved in when peach-config setup runs successfully
@@ -54,7 +56,7 @@ pub struct Manifest {
 pub struct HardwareConfig {
     // packages is a map of {package_name: version}
     i2c: bool,
-    rtc: Option<RtcOption>
+    rtc: Option<RtcOption>,
 }
 
 /// Log which hardware settings were configured to a .json file
@@ -66,8 +68,10 @@ pub struct HardwareConfig {
 ///
 /// Any error results in a PeachConfigError, otherwise the saved HardwareConfig object
 /// is returned.
-pub fn save_hardware_config(i2c: bool, rtc: Option<RtcOption>) -> Result<HardwareConfig, PeachConfigError> {
-
+pub fn save_hardware_config(
+    i2c: bool,
+    rtc: Option<RtcOption>,
+) -> Result<HardwareConfig, PeachConfigError> {
     let hardware_config = HardwareConfig { i2c, rtc };
 
     let json_str = serde_json::to_string(&hardware_config)?;
@@ -113,4 +117,3 @@ pub fn generate_manifest() -> Result<(), PeachConfigError> {
     println!("{}", output);
     Ok(())
 }
-

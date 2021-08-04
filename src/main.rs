@@ -1,21 +1,20 @@
 mod constants;
 mod error;
+mod generate_manifest;
 mod setup_networking;
 mod setup_peach;
 mod setup_peach_deb;
 mod update;
 mod utils;
-mod generate_manifest;
 
-use serde::{Deserialize, Serialize};
 use clap::arg_enum;
-use log::{error, info};
+use log::error;
+use serde::{Deserialize, Serialize};
 use structopt::StructOpt;
 
+use crate::generate_manifest::generate_manifest;
 use crate::setup_peach::setup_peach;
 use crate::update::update;
-use crate::generate_manifest::generate_manifest;
-
 
 #[derive(StructOpt, Debug)]
 #[structopt(
@@ -34,7 +33,6 @@ struct Opt {
 #[derive(StructOpt, Debug)]
 #[structopt(name = "peach-config", about = "about")]
 enum PeachConfig {
-
     /// Prints json manifest of peach configurations
     #[structopt(name = "manifest")]
     Manifest,
@@ -65,7 +63,6 @@ struct SetupOpts {
     default_locale: bool,
 }
 
-
 #[derive(StructOpt, Debug)]
 pub struct UpdateOpts {
     /// Only update other microservices and not peach-config
@@ -78,7 +75,6 @@ pub struct UpdateOpts {
     #[structopt(short, long)]
     list: bool,
 }
-
 
 arg_enum! {
     /// enum options for real-time clock choices
@@ -104,28 +100,27 @@ fn main() {
         match subcommand {
             PeachConfig::Setup(cfg) => {
                 match setup_peach(cfg.no_input, cfg.default_locale, cfg.i2c, cfg.rtc) {
-                    Ok(_) => {},
+                    Ok(_) => {}
                     Err(err) => {
                         error!("peach-config encountered an error: {}", err)
                     }
                 }
             }
-            PeachConfig::Manifest => {
-                match generate_manifest() {
-                    Ok(_) => {},
-                    Err(err) => {
-                        error!("peach-config countered an error generating manifest: {}", err)
-                    }
+            PeachConfig::Manifest => match generate_manifest() {
+                Ok(_) => {}
+                Err(err) => {
+                    error!(
+                        "peach-config countered an error generating manifest: {}",
+                        err
+                    )
                 }
             },
-            PeachConfig::Update(opts) => {
-                match update(opts) {
-                    Ok(_) => {},
-                    Err(err) => {
-                        error!("peach-config encountered an error during update: {}", err)
-                    }
+            PeachConfig::Update(opts) => match update(opts) {
+                Ok(_) => {}
+                Err(err) => {
+                    error!("peach-config encountered an error during update: {}", err)
                 }
-            }
+            },
         }
     }
 }

@@ -3,8 +3,6 @@ use crate::error::PeachConfigError;
 use crate::utils::{cmd, get_output};
 use crate::UpdateOpts;
 use serde::{Deserialize, Serialize};
-use log::info;
-
 
 /// Parses update subcommand CLI arguments and calls correct methods.
 ///
@@ -20,11 +18,9 @@ use log::info;
 pub fn update(opts: UpdateOpts) -> Result<(), PeachConfigError> {
     if opts.self_only {
         run_update_self()
-    }
-    else if opts.microservices {
+    } else if opts.microservices {
         update_microservices()
-    }
-    else if opts.list {
+    } else if opts.list {
         list_available_updates()
     }
     // otherwise no options were passed, and we do a full update:
@@ -37,14 +33,12 @@ pub fn update(opts: UpdateOpts) -> Result<(), PeachConfigError> {
     }
 }
 
-
 /// Updates peach-config using apt-get
 pub fn run_update_self() -> Result<(), PeachConfigError> {
     cmd(&["apt-get", "update"])?;
     cmd(&["apt-get", "install", "-y", "peach-config"])?;
     Ok(())
 }
-
 
 /// Installs all peach microservices or updates them to the latest version
 /// except for peach-config
@@ -69,25 +63,22 @@ pub fn update_microservices() -> Result<(), PeachConfigError> {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ListAvailableUpdatesOutput {
     // packages is a list of package names
-    upgradeable: Vec<String>
+    upgradeable: Vec<String>,
 }
 
 /// Checks if there are any PeachCloud updates available and displays them
 pub fn list_available_updates() -> Result<(), PeachConfigError> {
     cmd(&["apt-get", "update"])?;
     let output = get_output(&["apt", "list", "--upgradable"])?;
-    let lines = output.split("\n");
+    let lines = output.split('\n');
     // filter down to just lines which are one of the services
     let upgradeable: Vec<String> = lines
         .into_iter()
         .filter(|x| SERVICES.iter().any(|s| x.contains(s)))
         .map(|x| x.to_string())
         .collect();
-    let list_available_updates_output = ListAvailableUpdatesOutput {
-        upgradeable,
-    };
+    let list_available_updates_output = ListAvailableUpdatesOutput { upgradeable };
     let output = serde_json::to_string(&list_available_updates_output)?;
     println!("{}", output);
     Ok(())
 }
-

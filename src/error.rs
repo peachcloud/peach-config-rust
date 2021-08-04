@@ -1,9 +1,9 @@
+#![allow(clippy::nonstandard_macro_braces)]
 pub use snafu::ResultExt;
 use snafu::Snafu;
-use std::error;
-pub type BoxError = Box<dyn error::Error>;
 
 #[derive(Debug, Snafu)]
+#[allow(clippy::enum_variant_names)]
 #[snafu(visibility(pub(crate)))]
 pub enum PeachConfigError {
     #[snafu(display("Command not found: \"{}\"", command))]
@@ -29,9 +29,7 @@ pub enum PeachConfigError {
         source: std::io::Error,
     },
     #[snafu(display("Error serializing json: {}", source))]
-    SerdeError {
-        source: serde_json::Error,
-    }
+    SerdeError { source: serde_json::Error },
 }
 
 impl From<std::io::Error> for PeachConfigError {
@@ -43,11 +41,8 @@ impl From<std::io::Error> for PeachConfigError {
     }
 }
 
-
 impl From<serde_json::Error> for PeachConfigError {
     fn from(err: serde_json::Error) -> PeachConfigError {
-        PeachConfigError::SerdeError {
-            source: err,
-        }
+        PeachConfigError::SerdeError { source: err }
     }
 }
