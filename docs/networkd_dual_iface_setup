@@ -1,0 +1,116 @@
+install drivers for usb wifi adapter (RT5370 chipset):
+
+apt install firmware-ralink
+
+
+-----
+
+quick-setup (https://raspberrypi.stackexchange.com/a/108593):
+
+
+# create interface file for a wired connection
+
+sudo -Es
+cat > /etc/systemd/network/04-wired.network <<EOF
+[Match]
+Name=e*
+
+[Network]
+## Uncomment only one option block
+# Option: using a DHCP server and multicast DNS
+LLMNR=no
+LinkLocalAddressing=no
+MulticastDNS=yes
+DHCP=ipv4
+
+# Option: using link-local ip addresses and multicast DNS
+#LLMNR=no
+#LinkLocalAddressing=yes
+#MulticastDNS=yes
+
+# Option: using static ip address and multicast DNS
+# (example, use your settings)
+#Address=192.168.50.60/24
+#Gateway=192.168.50.1
+#DNS=84.200.69.80 1.1.1.1
+#MulticastDNS=yes
+EOF
+
+
+# deinstall classic networking
+
+sudo -Es
+apt --autoremove purge ifupdown dhcpcd5 isc-dhcp-client isc-dhcp-common rsyslog
+apt-mark hold ifupdown dhcpcd5 isc-dhcp-client isc-dhcp-common rsyslog raspberrypi-net-mods openresolv
+rm -r /etc/network /etc/dhcp
+
+
+# setup/enable systemd-resolved and systemd-networkd
+
+apt --autoremove purge avahi-daemon
+apt-mark hold avahi-daemon libnss-mdns
+apt install libnss-resolve
+ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+systemctl enable systemd-networkd.service systemd-resolved.service
+exit
+
+
+# configure wpa_supplicant for wlan1 as access point
+
+sudo -Es
+apt install rfkill
+cat > /etc/wpa_supplicant/wpa_supplicant-wlan0.conf <<EOF
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
+network={
+    ssid="peach"
+    mode=2
+    key_mgmt=WPA-PSK
+    psk="cloudless"
+    frequency=2412
+}
+EOF
+chmod 600 /etc/wpa_supplicant/wpa_supplicant-wlan1.conf
+systemctl disable wpa_supplicant.service
+systemctl enable wpa_supplicant@wlan1.service
+rfkill unblock 1
+
+# configure wpa_supplicant for wlan0 as client
+
+cat > /etc/wpa_supplicant/wpa_supplicant-wlan1.conf <<EOF
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
+network={
+    ssid="TestNet"
+    psk="anotherSecretPassword"
+}
+EOF
+chmod 600 /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+systemctl disable wpa_supplicant.service
+systemctl enable wpa_supplicant@wlan0.service
+rfkill unblock 0
+
+
+# configure interfaces
+
+cat > /etc/systemd/network/08-wlan1.network <<EOF
+[Match]
+Name=wlan1
+[Network]
+Address=11.11.11.1/24
+# IPMasquerade is doing NAT
+#IPMasquerade=yes
+#IPForward=yes
+DHCPServer=yes
+[DHCPServer]
+DNS=84.200.69.80 1.1.1.1
+EOF
+
+cat > /etc/systemd/network/12-wlan0.network <<EOF
+[Match]
+Name=wlan0
+[Network]
+DHCP=yes
+EOF

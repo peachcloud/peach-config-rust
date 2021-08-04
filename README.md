@@ -1,7 +1,7 @@
 # peach-config
 
 [![Build Status](https://travis-ci.com/peachcloud/peach-config.svg?branch=main)](https://travis-ci.com/peachcloud/peach-config) 
-![Generic badge](https://img.shields.io/badge/version-0.1.9-<COLOR>.svg)
+![Generic badge](https://img.shields.io/badge/version-0.1.10-<COLOR>.svg)
 
 Rust crate which provides a CLI tool for installing and updating PeachCloud. 
 

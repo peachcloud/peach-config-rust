@@ -1,0 +1,150 @@
+Infinite thanks to [ingo](https://raspberrypi.stackexchange.com/users/79866/ingo) for sharing these setup instructions online!
+
+-----
+
+[quick-setup](https://raspberrypi.stackexchange.com/a/108593)
+
+
+# deinstall classic networking
+
+sudo -Es   # if not already done
+apt install libnss-resolve
+apt --autoremove purge ifupdown dhcpcd5 isc-dhcp-client isc-dhcp-common rsyslog
+apt-mark hold ifupdown dhcpcd5 isc-dhcp-client isc-dhcp-common rsyslog raspberrypi-net-mods openresolv
+rm -r /etc/network /etc/dhcp
+
+
+# setup/enable systemd-resolved and systemd-networkd
+
+apt --autoremove purge avahi-daemon
+apt-mark hold avahi-daemon libnss-mdns
+ln -sf /run/systemd/resolve/stub-resolv.conf /etc/resolv.conf
+systemctl enable systemd-networkd.service systemd-resolved.service
+
+
+# create interface file for a wired connection
+
+sudo -Es
+cat > /etc/systemd/network/04-wired.network <<EOF
+[Match]
+Name=e*
+
+[Network]
+## Uncomment only one option block
+# Option: using a DHCP server and multicast DNS
+LLMNR=no
+LinkLocalAddressing=no
+MulticastDNS=yes
+DHCP=ipv4
+
+# Option: using link-local ip addresses and multicast DNS
+#LLMNR=no
+#LinkLocalAddressing=yes
+#MulticastDNS=yes
+
+# Option: using static ip address and multicast DNS
+# (example, use your settings)
+#Address=192.168.50.60/24
+#Gateway=192.168.50.1
+#DNS=84.200.69.80 1.1.1.1
+#MulticastDNS=yes
+EOF
+
+reboot
+
+
+[switch between wifi client and access point without reboot](https://raspberrypi.stackexchange.com/questions/93311/switch-between-wifi-client-and-access-point-without-reboot)
+
+# setup wpa_supplicant as wifi client with wlan0
+
+cat > /etc/wpa_supplicant/wpa_supplicant-wlan0.conf <<EOF
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
+network={
+    ssid="TestNet"
+    psk="verySecretPwassword"
+}
+EOF
+
+chmod 600 /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+systemctl disable wpa_supplicant.service
+systemctl enable wpa_supplicant@wlan0.service
+
+
+# setup wpa_supplicant as access point with ap0
+
+cat > /etc/wpa_supplicant/wpa_supplicant-ap0.conf <<EOF
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+
+network={
+    ssid="RPiNet"
+    mode=2
+    key_mgmt=WPA-PSK
+    proto=RSN WPA
+    psk="anotherPassword"
+    frequency=2412
+}
+EOF
+
+chmod 600 /etc/wpa_supplicant/wpa_supplicant-ap0.conf
+
+
+# configure interfaces
+
+cat > /etc/systemd/network/08-wlan0.network <<EOF
+[Match]
+Name=wlan0
+[Network]
+DHCP=yes
+EOF
+
+cat > /etc/systemd/network/12-ap0.network <<EOF
+[Match]
+Name=ap0
+[Network]
+Address=192.168.4.1/24
+DHCPServer=yes
+[DHCPServer]
+DNS=84.200.69.80 1.1.1.1
+EOF
+
+
+# modify service for access point to use ap0
+
+systemctl disable wpa_supplicant@ap0.service
+systemctl edit --full wpa_supplicant@ap0.service
+
+# modify/insert only these lines: Requires=, After=, Conflicts=, ExecStartPre= and ExecStopPost= as shown:
+
+[Unit]
+Description=WPA supplicant daemon (interface-specific version)
+Requires=sys-subsystem-net-devices-wlan0.device
+After=sys-subsystem-net-devices-wlan0.device
+Conflicts=wpa_supplicant@wlan0.service
+Before=network.target
+Wants=network.target
+
+# NetworkManager users will probably want the dbus version instead.
+
+[Service]
+Type=simple
+ExecStartPre=/sbin/iw dev wlan0 interface add ap0 type __ap
+ExecStart=/sbin/wpa_supplicant -c/etc/wpa_supplicant/wpa_supplicant-%I.conf -Dnl80211,wext -i%I
+ExecStopPost=/sbin/iw dev ap0 del
+
+[Install]
+Alias=multi-user.target.wants/wpa_supplicant@%i.service
+
+# set wlan0 to run as client on startup
+
+sudo systemctl enable wpa_supplicant@wlan0.service
+sudo systemctl disable wpa_supplicant@ap0.service
+reboot
+
+
+# switch the service when desired (no stopping of services is required)
+
+sudo systemctl start wpa_supplicant@ap0.service
+sudo systemctl start wpa_supplicant@wlan0.service
